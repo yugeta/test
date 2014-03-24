@@ -1,0 +1,75 @@
+DirectoryIndex system.php
+AddDefaultCharset UTF-8
+AddLanguage jp .jp
+
+php_value memory_limit 1G
+php_value post_max_size 12G
+php_value upload_max_filesize 10G
+#php_value max_file_uploads 1000
+
+php_value pcre.backtrack_limit 500000
+php_value pcre.recursion_limit 500000
+
+#upload
+php_value max_file_uploads 1000
+php_value max_execution_time 1000
+
+#php_value max_execution_time 600
+#php_value upload_max_filesize 256M
+#php_value post_max_size 288M
+#php_value memory_limit 512M
+
+
+#php_flag magic_quotes_gpc off
+
+#Redirect permanent / http://174.129.221.230/formassist/
+
+## NOTICE-error
+#php_value error_reporting 6135
+
+#php_value upload_max_filesize 64M
+#php_value post_max_size 64M
+
+#php_value pcre.backtrack_limit 500000
+#php_value pcre.recursion_limit 500000
+
+##ErrorDocument 404 https://navicast.jp/404.js
+#ErrorDocument 404 http://navicast.jp/404.js
+
+
+#mod-rewrite
+#Options +FollowSymLinks
+#RewriteEngine on
+
+#RewriteEngine On 
+#RewriteBase /codiad/workspace/labo/design/
+
+#RewriteCond %{REQUEST_FILENAME} !-f
+#RewriteCond %{REQUEST_FILENAME} !-d
+#RewriteCond %{REQUEST_URI} \.(.*)$ [NC]
+#RewriteRule (.*) index.php?tool=$1 [QSA,L]
+
+
+#RewriteRule (.*) index2.php?tool=%{REQUEST_URI}&a[]=$1&b[]=%{REQUEST_URI} [QSA]
+#RewriteRule ^(.*)$ index2.php?tool=%{REQUEST_URI}&a[]=$1&a[]=$2&a[]=$3&b[]=%{REQUEST_URI} [QSA]
+
+
+
+
+#RewriteCond %{REQUEST_FILENAME} !-f
+#RewriteRule . index.php [L]
+
+#RewriteCond %{REQUEST_FILENAME} !-f
+#RewriteCond %{REQUEST_FILENAME} !-d
+#RewriteCond %{REQUEST_URI} !^/index.php
+#RewriteCond %{REQUEST_URI} (/|\.php|\.html|\.htm|\.feed|\.pdf|\.raw|/[^.]*)$ [NC]
+#RewriteRule (.*) index.php
+#RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization},L]
+
+
+#RewriteEngine on
+#RewriteCond %{REQUEST_FILENAME} !-f
+#RewriteCond %{REQUEST_FILENAME} !-d
+#RewriteRule (.*)/(.*)/(.*) index.php?tool=$1&mode=$2&sction=$3 [QSA,L]
+#RewriteRule (.*)/(.*) index.php?tool=$1&mode=$2 [QSA,L]
+#RewriteRule (.*) index.php?tool=$1 [QSA,L]

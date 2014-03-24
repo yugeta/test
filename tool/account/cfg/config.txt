@@ -1,0 +1,4 @@
+login_mode=1
+name=AccountSet
+name_class=orange,orange,orange,orange,orange,orange,orange,invert,
+type=system

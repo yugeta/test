@@ -1,0 +1,3 @@
+name=Servman
+name_class=red,red,red,red,invert,
+type=service

@@ -1,0 +1,20 @@
+
+/*@media screen and (max-width: 480px){}*/
+
+/* pc */
+@import url('pc/index.css')  screen and (min-width: 769px);
+@import url('pc/logo.css')   screen and (min-width: 769px);
+@import url('pc/header.css') screen and (min-width: 769px);
+@import url('pc/footer.css') screen and (min-width: 769px);
+
+@import url('tablet/index.css')  screen and (min-width: 481px) and (max-width: 768px);
+@import url('tablet/logo.css')   screen and (min-width: 481px) and (max-width: 768px);
+@import url('tablet/header.css') screen and (min-width: 481px) and (max-width: 768px);
+@import url('tablet/footer.css') screen and (min-width: 481px) and (max-width: 768px);
+
+@import url('smartphone/index.css')  screen and (max-width: 480px);
+@import url('smartphone/logo.css')   screen and (max-width: 480px);
+@import url('smartphone/header.css') screen and (max-width: 480px);
+@import url('smartphone/footer.css') screen and (max-width: 480px);
+
+/*@import url('regist.css');*/

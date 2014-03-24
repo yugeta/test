@@ -1,0 +1,3 @@
+name=WebMark
+name_class=red,red,red,invert,
+type=service

@@ -1,0 +1,226 @@
+<?
+
+/**
+ * Log-in（認証）システム
+ * 
+ * [passwd.txt]
+ *  uid , pwd , auth-code , group-id , update
+ * 
+ * [user_data.txt]
+ *  update , uid , name , mail , ...
+ * 
+ * [cookie-data]
+ *  %session_id[ymd,ip]% , %end-datetime%
+ *  
+ *  
+**/
+
+class LOGIN{
+    
+	//Login機能の使用フラグ[true:使用する false:使用しない]
+	//public $flg = true;
+    
+	//保存先ディレクトリ※セッションファイル
+	public $path = 'data/login/';
+	
+    //cookieデータの区切り文字列[ymd.ip-deadtime]
+    public $cookie_split = '.';
+    
+    //デフォルトセッション有効期間（1時間有効）※クッキー有効時間
+    public $session_dead = 3600;
+    
+    //クッキー保持時間※1年間保持（セッションファイル有効期間はセッション有効期間より長め）
+    public function cookie_time(){return (365*24*60*60);}
+    
+    
+    
+	//認証処理
+	public function check(){
+        
+        //cookie確認（セッション）
+        $cookie = new COOKIE();
+        
+        $cookie_data = explode($this->cookie_split , $cookie->read($cookie->id));
+        if($cookie_data[0] && $cookie_data[1]){
+            $session_id = $cookie_data[0].'.'.$cookie_data[1];
+        }
+        else{
+            $session_id = '';
+        }
+        
+        //log-out
+        if($_REQUEST[sys]=='logout'){
+            $this->logout($session_id);
+        }
+        
+        unset($uid);
+        
+        //continue
+        if($session_id){
+            //セッションがサーバーに存在する場合　※通常遷移
+            if(file_exists($this->path.$session_id)){
+                //$uid = $this->session_id($session_id);
+                //セッション情報よりuser-idを取得
+                /*
+                $session_data = file_get_contents($this->path.$session_id);
+                $session_datas= split(",",$session_data);
+                $uid = $session_datas[0];
+                */
+                $session_files = file($this->path.$session_id);
+                $session_counts= count($session_files);
+                $session_datas = explode(",",$session_files[$session_counts-1]);
+                $uid = $session_datas[0];
+                $last_access = $session_datas[1];
+                
+                
+                //die("id:".$uid."/".$session_counts."/".$this->path.$session_id);
+                //最終セッション確認（基準範囲以内であれば、通常処理、それ以外はログアウト処理）
+                //指定期間を超えている場合は、セッションファイルを消して、ログアウト
+                
+                //今現在から範囲内有効期限を割り出す
+                $date = new DATE();
+                //60分間有効※cookie登録済み有効期限データがあれば、そちらが有効
+                $session_dead = ($cookie_data[2])?$cookie_data[2]:$this->session_dead;
+                $ymdhis = $date->advance_secounds($last_access,$session_dead);
+                
+                //die($_POST[cookie_time]."<br>".$session_data."<br>".$ymdhis ."<br>". date(YmdHis));
+                
+                //クッキーの最終アクセス日時＋有効時間が現在時刻を下回っている場合は、ログアウト
+                if($ymdhis < date(YmdHis)){
+                    //$_REQUEST[sys]='logout';
+                    $this->logout($session_id);
+                    return;
+                }
+                
+                else{
+                    //セッション情報の追記※更新時からのみ追記（追記内容は、アクセス日付）
+                    //$str = new STRING();
+                    file_put_contents($this->path.$session_id, $uid.",".date(YmdHis).",\n",FILE_APPEND);
+                    
+                    //cookie情報の保持期間を更新
+                    //$cookie = new COOKIE();
+                    //$cookietime = ($_REQUESR[cookir_time])?$_REQUESR[cookir_time]:$this->cookie_time();
+                    $cookie->write($cookie->id , $session_id.$this->cookie_split.$session_dead , $this->cookie_time());
+                }
+                    
+            }
+            //セッションファイルがない場合は、クッキー削除
+            else{
+                $cookie->clear($cookie->id);
+            }
+        }
+        
+		//log-in
+		if($_REQUEST[sys]=='login'){
+            $uid = $this->login($_POST[id],$_POST[pw],$_POST[cookie_time]);
+            return $uid;
+		}
+        /*
+        //log-out
+        else if($_REQUEST[sys]=='logout'){
+            $this->logout($session_id);
+            return;
+        }
+        */
+        //認証中（セッション保持）確認処理
+        else if($uid){
+            return $uid;
+        }
+		
+	}
+	
+    //ユーザー、パスワード確認※パスワード指定がない場合は登録済みユーザー確認
+    function user_confirm($uid,$pw=null){
+        $sys = new SYS();
+        
+        $file = $sys->sys.$sys->pass;
+        
+        if(file_exists($file)){
+            $data = file($file);
+            //下の行から検索
+            for($cnt=count($data),$i=$cnt-1;$i>=0;$i--){
+                
+                $sp = split(",",$data[$i]);
+                
+                //IDマッチング確認
+                if($sp[0]==$uid){
+                    //pw確認
+                    if($pw){
+                        if($sp[1]==$pw){
+                            return true;
+                        }
+                    }
+                    //IDのみ確認
+                    else{
+                        return true;
+                    }
+                    break;
+                }
+            }
+		}
+    }
+    
+	//loginファイル確認→認証処理
+	function login($id,$pw,$cookie_time=null){
+		if(!$id || !$pw){return;}
+        
+        $str = new STRING();
+        
+        $id_code = $str->enc_code($id);
+        $pw_code = $str->enc_code($pw);
+		
+        //データ確認（ファイル確認）
+        if(!$this->user_confirm($id_code,$pw_code)){return;}
+        //ログイン成功処理
+        
+        //ipアドレス文字列処理
+        $ip = $_SERVER[REMOTE_ADDR];
+        
+        $ips = explode('.',$ip);
+        for($i=0,$c=count($ips);$i<$c;$i++){
+            $ips[$i] = sprintf("%03d",$ips[$i]);
+        }
+        $ip = join('',$ips);
+        
+        
+		//ユニーク値(yyyymmdd.ip)
+		$session_id = date(YmdHis).'.'.$ip;
+		
+		//保存ディレクトリ作成
+		mkdir($this->path, 0777, true);
+		
+		//一時ファイル保存
+		file_put_contents($this->path.$session_id, $id_code.','.date(YmdHis).",\n");
+		
+		//クッキー保存※365日期限
+		$cookie = new COOKIE();
+        //約一ヶ月分
+        //$time = (30 * 24 * 60 * 60);
+        //$cookietime = ($_REQUESR[cookir_time])?$_REQUESR[cookir_time]:$this->cookie_time();
+        $session_dead = ($cookie_time)?$cookie_time:$this->session_dead;
+		$cookie->write($cookie->id , $session_id.$this->cookie_split.$session_dead , $this->cookie_time());
+		
+        //リダイレクト処理※postクエリのキャッシュ排除処理
+        $url = new URL();
+        //die($url->uri().(($_REQUEST[tool])?'?tool='.$_REQUEST[tool]:''));
+        $url->move($url->uri().(($_REQUEST[tool])?'?tool='.$_REQUEST[tool]:''));
+        
+	}
+	
+    //ログアウト処理
+    function logout($session_id=null){
+        //セッションデータ削除
+        if($session_id && file_exists($this->path.$session_id)){
+            unlink($this->path.$session_id);
+        }
+        
+        //cookie削除
+        $cookie = new COOKIE();
+        $cookie->clear($cookie->id);
+        
+        //リダイレクト※クエリを全て除外する
+        $url = new URL();
+        $url->move($url->url().(($_REQUEST[tool])?'?tool='.$_REQUEST[tool]:''));
+    }
+    
+}
