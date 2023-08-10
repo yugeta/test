@@ -1,4 +1,0 @@
---login_mode=1
-name=IDEACompo
-name_class=red,red,red,red,invert,
-type=system
