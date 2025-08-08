@@ -1,4 +1,0 @@
-<div>
-  <p>クリックしたよ！</p>
-  <p>Hello World !!</p>
-</div>
